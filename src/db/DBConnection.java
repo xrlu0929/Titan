@@ -62,15 +62,13 @@ public interface DBConnection {
    * @return list of items
    */
   //public List<Item> searchItems(String userId, String mapCode, String term);
-  
+  public List<Item> searchItems(String userId, double lat, double lon, String term);
   /**
    * Save item into db.
    * @param item
    */
   public void saveItem(Item item);
 
-  public List<Item> searchItems(String userId, double lat, double lon, String term);
-  
   //public List<Item> searchItems(String userId, String geoPoint, String term);
 
 }

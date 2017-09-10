@@ -78,7 +78,7 @@ public class Item {
 		return categories;
 	}
 
-	public String getImageUrl() {
+	public String getImage_url() {
 		return imageUrl;
 	}
 

@@ -30,7 +30,6 @@ public class SearchItem extends HttpServlet {
      * @see HttpServlet#HttpServlet()
      */
     public SearchItem() {
-        super();
         // TODO Auto-generated constructor stub
     }
 
@@ -66,7 +65,6 @@ public class SearchItem extends HttpServlet {
 		}
 		JSONArray array = new JSONArray(list);
 		RpcHelper.writeJsonArray(response, array);
-
 	}
 
 

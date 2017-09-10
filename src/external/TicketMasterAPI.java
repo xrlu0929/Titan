@@ -17,24 +17,26 @@ import org.json.JSONObject;
 import entity.Item;
 import entity.Item.ItemBuilder;
 
-public class TicketMasterAPI implements ExternalAPI {
+public class TicketMasterAPI implements ExternalAPI{
 	private static final String API_HOST = "app.ticketmaster.com";
 	private static final String SEARCH_PATH = "/discovery/v2/events.json";
-	private static final String DEFAULT_TERM = "ticket";  // no restriction
-	private static final String API_KEY = "Jnt6QHEgL77JF2GP093dwJapLSSbAhV9";
+	private static final String DEFAULT_TERM = "ticket";  
+	//private static final String DEFAULT_TERM = ""; //does not work  
+	private static final String API_KEY = "4EWZ6M1GVt5sCTh7qeYHzOVRlIcuCB3I";
 
 	/**
 	 * Creates and sends a request to the TicketMaster API by term and location.
 	 */
 	public List<Item> search(double lat, double lon, String term) {
 		String url = "http://" + API_HOST + SEARCH_PATH;
-		String geohash = GeoHash.encodeGeohash(lat, lon, 4);
 		//String latlong = lat + "," + lon;
+		// Convert geo location to geo hash with a precision of 4 (+- 20km)
+		String geoHash = GeoHash.encodeGeohash(lat, lon, 4);
 		if (term == null) {
 			term = DEFAULT_TERM;
 		}
 		term = urlEncodeHelper(term);
-		String query = String.format("apikey=%s&latlong=%s&keyword=%s", API_KEY, geohash, term);
+		String query = String.format("apikey=%s&geoPoint=%s&keyword=%s", API_KEY, geoHash, term);
 		try {
 			HttpURLConnection connection = (HttpURLConnection) new URL(url + "?" + query).openConnection();
 			connection.setRequestMethod("GET");
@@ -100,24 +102,12 @@ public class TicketMasterAPI implements ExternalAPI {
 			builder.setImageUrl(getImageUrl(event));
 			builder.setUrl(getStringFieldOrNull(event, "url"));
 			JSONObject venue = getVenue(event);
+			String cityName = "";
 			if (venue != null) {
-				if (!venue.isNull("address")) {
-					JSONObject address = venue.getJSONObject("address");
-					StringBuilder sb = new StringBuilder();
-					if (!address.isNull("line1")) {
-						sb.append(address.getString("line1"));
-					}
-					if (!address.isNull("line2")) {
-						sb.append(address.getString("line2"));
-					}
-					if (!address.isNull("line3")) {
-						sb.append(address.getString("line3"));
-					}
-					builder.setAddress(sb.toString());
-				}
 				if (!venue.isNull("city")) {
 					JSONObject city = venue.getJSONObject("city");
-					builder.setCity(getStringFieldOrNull(city, "name"));
+			        cityName = getStringFieldOrNull(city, "name");
+			        builder.setCity(cityName);
 				}
 				if (!venue.isNull("country")) {
 					JSONObject country = venue.getJSONObject("country");
@@ -128,11 +118,27 @@ public class TicketMasterAPI implements ExternalAPI {
 					builder.setState(getStringFieldOrNull(state, "name"));
 				}
 				builder.setZipcode(getStringFieldOrNull(venue, "postalCode"));
+		        
+				if (!venue.isNull("address")) {
+		          JSONObject address = venue.getJSONObject("address");
+		          StringBuilder sb = new StringBuilder();
+		          if (!address.isNull("line1")) {
+		            sb.append(address.getString("line1"));
+		          }
+		          if (!address.isNull("line2")) {
+		            sb.append(address.getString("line2"));
+		          }
+		          if (!address.isNull("line3")) {
+		            sb.append(address.getString("line3"));
+		          }
+		          builder.setAddress(String.join(",", sb.toString(), cityName));
+		        }
+				
 				if (!venue.isNull("location")) {
-					JSONObject location = venue.getJSONObject("location");
-					builder.setLatitude(getNumericFieldOrNull(location, "latitude"));
-					builder.setLongitude(getNumericFieldOrNull(location, "longitude"));
-				}
+			          JSONObject location = venue.getJSONObject("location");
+			          builder.setLatitude(getNumericFieldOrNull(location, "latitude"));
+			          builder.setLongitude(getNumericFieldOrNull(location, "longitude"));
+			    }
 			}
 
 			// Uses this builder pattern we can freely add fields.
@@ -181,6 +187,9 @@ public class TicketMasterAPI implements ExternalAPI {
 
 	private Set<String> getCategories(JSONObject event) throws JSONException {
 		Set<String> categories = new HashSet<>();
+		if (event.isNull("classifications")) {
+			  return categories; // ADDED a null checking
+		}
 		JSONArray classifications = (JSONArray) event.get("classifications");
 		for (int j = 0; j < classifications.length(); j++) {
 			JSONObject classification = classifications.getJSONObject(j);
