@@ -73,7 +73,7 @@ public class FindPeak{
 				public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
 					if (o2.getValue().compareTo(o1.getValue()) > 0) {
 						return 1;
-					} else {
+					} else { 
 						return -1;
 					}
 				}
