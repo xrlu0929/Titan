@@ -51,6 +51,7 @@ public class RpcHelperTest {
 		JSONAssert.assertEquals(jsonArray, RpcHelper.getJSONArray(listItem), true);
 		
 		Item empty = new ItemBuilder().build();
+		listItem.add(empty);
 		jsonArray.put(empty.toJSONObject());
 		JSONAssert.assertEquals(jsonArray, RpcHelper.getJSONArray(listItem), true);
 	}
